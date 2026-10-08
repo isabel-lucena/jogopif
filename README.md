@@ -14,4 +14,4 @@ O jogador começa com 3 vidas e se move pelas salas usando o teclado. As estrela
 - Alocação dinâmica: criação e liberação de distrações e estrelas com malloc e free.
 - Listas encadeadas: controle das distrações ativas e das estrelas coletadas.
 - Matrizes: mapa de cada sala do prédio.
-- - Arquivos: leitura dos mapas das salas a partir de arquivos de texto e gravação do ranking de melhores pontuações.
+- Arquivos: leitura dos mapas das salas a partir de arquivos de texto e gravação do ranking de melhores pontuações.
