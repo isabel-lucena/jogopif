@@ -10,7 +10,7 @@ TARGET = escapif
 
 all: $(TARGET)
 
-$(TARGET): $(SRC)
+$(TARGET): $(SRC) $(wildcard include/*.h)
 	$(CC) $(CFLAGS) $(SRC) -o $(TARGET) $(LIBS)
 
 run: all
