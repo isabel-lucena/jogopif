@@ -1,9 +1,7 @@
-
 #ifndef TIPOS_H
 #define TIPOS_H
 
 #include "raylib.h"
-
 
 #define MAPA_ALT        18    
 #define MAPA_LARG       60      
@@ -14,11 +12,8 @@
 #define ALTURA_JANELA   (MAPA_ALT * TAM_CELULA + HUD_ALT)   
 #define FPS             60
 
-
 #define PIXEL_X(coluna) ((coluna) * TAM_CELULA)
 #define PIXEL_Y(linha)  (HUD_ALT + (linha) * TAM_CELULA)
-
-
 
 #define VIDAS_INICIAIS   3
 #define META_ESTRELAS    7     
@@ -33,7 +28,6 @@
 #define RANKING_TOP     10
 #define ARQ_RANKING     "ranking.txt"
 
-
 #define CH_PAREDE     'x'
 #define CH_CHAO       ' '
 #define CH_JOGADOR    '@'       
@@ -43,7 +37,6 @@
 #define CH_PROFESSOR  'P'
 #define CH_VIDA       '+'
 #define CH_SAIDA      'S'       
-
 
 #define COR_FUNDO      BLACK
 #define COR_PAREDE     DARKBLUE                        
@@ -63,7 +56,6 @@
 #define COR_VITORIA    (Color){  80, 255, 120, 255 }  
 
 
-
 typedef enum {
     CELULAR,
     REDES_SOCIAIS,
@@ -71,7 +63,6 @@ typedef enum {
     CONVERSA,
     VIRUS
 } TipoDistracao;
-
 
 typedef enum {
     DA_ESTRELA,     
@@ -87,7 +78,6 @@ typedef enum {
     TELA_GAMEOVER,  
     TELA_FIM        
 } Tela;
-
 
 
 typedef struct {
