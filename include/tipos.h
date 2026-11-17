@@ -55,30 +55,21 @@
 #define COR_PERIGO     (Color){ 255,  40,  60, 255 }    
 #define COR_VITORIA    (Color){  80, 255, 120, 255 }  
 
+#define DIST_CELULAR       0
+#define DIST_REDES_SOCIAIS 1
+#define DIST_SONO          2
+#define DIST_CONVERSA      3
+#define DIST_VIRUS         4
 
-typedef enum {
-    CELULAR,
-    REDES_SOCIAIS,
-    SONO,
-    CONVERSA,
-    VIRUS
-} TipoDistracao;
+#define ALIADO_DA_ESTRELA  0
+#define ALIADO_DA_VIDA     1
+#define ALIADO_DA_TEMPO    2
+#define ALIADO_DA_QUEBRA   3
 
-typedef enum {
-    DA_ESTRELA,     
-    DA_VIDA,        
-    DA_TEMPO,       
-    DA_QUEBRA      
-} TipoAliado;
-
-
-typedef enum {
-    TELA_NOME,      
-    TELA_JOGO,
-    TELA_GAMEOVER,  
-    TELA_FIM        
-} Tela;
-
+#define TELA_NOME          0
+#define TELA_JOGO          1
+#define TELA_GAMEOVER      2
+#define TELA_FIM           3
 
 typedef struct {
     int x, y;                  
@@ -92,13 +83,13 @@ typedef struct Estrela {
 
 typedef struct Distracao {     
     Posicao pos;
-    TipoDistracao tipo;
+    int tipo;
     struct Distracao *prox;
 } Distracao;
 
 typedef struct Aliado {        
     Posicao pos;
-    TipoAliado tipo;
+    int tipo;
     struct Aliado *prox;
 } Aliado;
 
@@ -134,7 +125,7 @@ typedef struct {
 } Jogador;
 
 typedef struct {               
-    Tela      tela;
+    int       tela;
     Sala      salas[NUM_SALAS];
     Jogador   jogador;
     double    inicio;          
