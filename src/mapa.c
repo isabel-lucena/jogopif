@@ -1,7 +1,7 @@
-
 #include <stdio.h>
 #include <string.h>
 #include "mapa.h"
+#include "tipos.h"
 
 int mapaCarregar(Sala *sala, const char *arquivo) {
     FILE *f = fopen(arquivo, "r");
