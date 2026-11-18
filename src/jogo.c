@@ -368,7 +368,6 @@ void jogoAtualizar(Jogo *jogo) {
 }
 
 void jogoDesenhar(const Jogo *jogo) {
-    BeginDrawing();
     ClearBackground(COR_FUNDO);
 
     if (jogo->tela == TELA_NOME) {
@@ -383,8 +382,6 @@ void jogoDesenhar(const Jogo *jogo) {
 
         DrawText("RANKING - TOP 10:", LARGURA_JANELA / 2 - 105, 245, 20, COR_ESTRELA);
         rankingDesenhar(jogo->ranking, LARGURA_JANELA / 2 - 120, 275);
-
-        EndDrawing();
         return;
     }
 
@@ -451,8 +448,6 @@ void jogoDesenhar(const Jogo *jogo) {
         DrawText("Pressione ENTER para tentar novamente ou ESC para sair",
                  LARGURA_JANELA / 2 - 250, ALTURA_JANELA / 2 + 40, 18, COR_SUAVE);
     }
-
-    EndDrawing();
 }
 
 void jogoFinalizar(Jogo *jogo) {
