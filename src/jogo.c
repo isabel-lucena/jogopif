@@ -297,7 +297,12 @@ void jogoAtualizar(Jogo *jogo) {
         int nx = jogo->jogador.pos.x + dx;
         int ny = jogo->jogador.pos.y + dy;
 
-        if (mapaEhParede(sala, nx, ny)) {
+        Distracao *d = distracaoEm(sala->distracoes, nx, ny);
+        if (d != NULL) {
+            if (jogo->jogador.invencivel <= 0.0f) {
+                jogoAplicarDistracao(jogo, d);
+            }
+        } else if (mapaEhParede(sala, nx, ny)) {
             if (jogo->jogador.quebrasRestantes > 0 && mapaQuebrarParede(sala, nx, ny)) {
                 jogo->jogador.quebrasRestantes--;
                 jogo->jogador.pos.x = nx;
