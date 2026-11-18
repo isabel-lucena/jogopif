@@ -48,12 +48,9 @@ void mapaDesenhar(const Sala *sala) {
 
             if (c == CH_PAREDE) {
                 DrawRectangle(px, py, TAM_CELULA, TAM_CELULA, COR_PAREDE);
-            } else if (c >= '1' && c <= '3') {
-                char texto[2] = { c, '\0' };
-                DrawText(texto, px + 5, py, TAM_CELULA, COR_PORTA);
-            } else if (c == CH_SAIDA) {
+            } else if (c == '>' || c == CH_SAIDA) {
                 DrawRectangleLines(px, py, TAM_CELULA, TAM_CELULA, COR_PORTA);
-                DrawText("S", px + 5, py, TAM_CELULA, COR_PORTA);
+                DrawText(">", px + 5, py, TAM_CELULA, COR_PORTA);
             }
         }
     }
