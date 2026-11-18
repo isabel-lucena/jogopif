@@ -1,23 +1,24 @@
+#include <stdlib.h>
+#include <time.h>
 #include "raylib.h"
+#include "tipos.h"
+#include "jogo.h"
 
 int main(void) {
+    srand((unsigned int)time(NULL));
 
-    InitWindow(1000, 700, "escaPIF");
+    InitWindow(LARGURA_JANELA, ALTURA_JANELA, "escaPIF - Fuga do Brum");
+    SetTargetFPS(FPS);
 
-    SetTargetFPS(60);
+    Jogo jogo;
+    jogoInicializar(&jogo);
 
     while (!WindowShouldClose()) {
-
-        BeginDrawing();
-
-        ClearBackground(RAYWHITE);
-
-        DrawText("Bem-vinda ao escaPIF!",
-                 300, 300, 30, DARKBLUE);
-
-        EndDrawing();
+        jogoAtualizar(&jogo);
+        jogoDesenhar(&jogo);
     }
 
+    jogoFinalizar(&jogo);
     CloseWindow();
 
     return 0;
