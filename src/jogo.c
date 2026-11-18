@@ -47,7 +47,7 @@ static void jogoPrepararSala(Sala *s) {
 
 void jogoInicializar(Jogo *jogo) {
     memset(jogo, 0, sizeof(Jogo));
-    strcpy(jogo->nome, "Aluno");
+    jogo->nome[0] = '\0';
     jogo->tela = TELA_NOME;
     jogo->ranking = rankingCarregar(ARQ_RANKING);
 }
@@ -257,7 +257,8 @@ void jogoAtualizar(Jogo *jogo) {
 
         if (IsKeyPressed(KEY_ENTER)) {
             if (strlen(jogo->nome) == 0) {
-                strcpy(jogo->nome, "Aluno");
+                jogoAvisar("Digite seu nome antes de iniciar.", 3.0f);
+                return;
             }
             jogoNovaPartida(jogo);
         }
