@@ -198,7 +198,8 @@ static void jogoVerificarEntidades(Jogo *jogo, Sala *sala) {
     if (e != NULL) {
         if (e->fake) {
             free(e);
-            jogoAvisar("Era uma estrela FAKE! Nao contou.", 3.0f);
+            jogo->jogador.pos = jogo->jogador.entrada;
+            jogoAvisar("Estrela FAKE! Voce voltou para a entrada da sala.", 3.0f);
         } else {
             estrelaInserir(&jogo->jogador.coletadas, e);
             int total = jogoContarEstrelas(&jogo->jogador);
