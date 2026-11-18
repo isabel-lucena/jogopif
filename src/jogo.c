@@ -1,4 +1,7 @@
 #include "jogo.h"
+#include "mapa.h"
+#include "entidades.h"
+#include "ranking.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,11 +16,7 @@ static void jogoAvisar(const char *texto, float duracao) {
 }
 
 static int jogoContarEstrelas(const Jogador *j) {
-    int total = j->estrelasExtras;
-    for (const Estrela *p = j->coletadas; p != NULL; p = p->prox) {
-        total++;
-    }
-    return total;
+    return j->estrelasExtras + estrelaContar(j->coletadas);
 }
 
 static int jogoCalcularPontos(const Jogo *jogo, int segundosGastos) {
@@ -31,73 +30,19 @@ static int jogoCalcularPontos(const Jogo *jogo, int segundosGastos) {
            bonusTempo;
 }
 
-static void jogoLimparListasSala(Sala *s) {
-    while (s->estrelas != NULL) {
-        Estrela *aux = s->estrelas;
-        s->estrelas = aux->prox;
-        free(aux);
-    }
-    while (s->distracoes != NULL) {
-        Distracao *aux = s->distracoes;
-        s->distracoes = aux->prox;
-        free(aux);
-    }
-    while (s->aliados != NULL) {
-        Aliado *aux = s->aliados;
-        s->aliados = aux->prox;
-        free(aux);
-    }
-    while (s->itensVida != NULL) {
-        ItemVida *aux = s->itensVida;
-        s->itensVida = aux->prox;
-        free(aux);
-    }
-}
-
-static void jogoLimparColetadas(Jogador *j) {
-    while (j->coletadas != NULL) {
-        Estrela *aux = j->coletadas;
-        j->coletadas = aux->prox;
-        free(aux);
-    }
-}
-
 static void jogoPrepararSala(Sala *s) {
     s->inicio.x = 1;
     s->inicio.y = 2;
 
     for (int y = 0; y < MAPA_ALT; y++) {
         for (int x = 0; x < MAPA_LARG; x++) {
-            char c = s->mapa[y][x];
-
-            if (c == 'X' || c == 'x') {
+            if (s->mapa[y][x] == 'X') {
                 s->mapa[y][x] = CH_PAREDE;
-            } else if (c == '7') {
-
-                s->mapa[y][x] = CH_SAIDA;
-            } else if (c == CH_JOGADOR) {
-                s->inicio.x = x;
-                s->inicio.y = y;
-                s->mapa[y][x] = CH_CHAO;
-            } else if (c == CH_ESTRELA || c == CH_FAKE || c == CH_DISTRACAO ||
-                       c == CH_PROFESSOR || c == CH_VIDA) {
-                s->mapa[y][x] = CH_CHAO;
             }
         }
     }
-}
 
-static Posicao jogoAcharPorta(const Sala *s, char porta) {
-    for (int y = 0; y < MAPA_ALT; y++) {
-        for (int x = 0; x < MAPA_LARG; x++) {
-            if (s->mapa[y][x] == porta) {
-                Posicao p = { x, y };
-                return p;
-            }
-        }
-    }
-    Posicao naoAchou = { -1, -1 };
-    return naoAchou;
+    entidadesExtrairDoMapa(s);
 }
 
 void jogoInicializar(Jogo *jogo) {
@@ -114,10 +59,10 @@ void jogoNovaPartida(Jogo *jogo) {
         "mapas/sala3.txt"
     };
 
-    jogoLimparColetadas(&jogo->jogador);
+    estrelasLiberar(&jogo->jogador.coletadas);
 
     for (int i = 0; i < NUM_SALAS; i++) {
-        jogoLimparListasSala(&jogo->salas[i]);
+        salaLiberar(&jogo->salas[i]);
         if (!mapaCarregar(&jogo->salas[i], arquivos[i])) {
             TraceLog(LOG_ERROR, "Nao foi possivel carregar %s", arquivos[i]);
         }
@@ -139,22 +84,16 @@ void jogoNovaPartida(Jogo *jogo) {
     jogo->venceu = 0;
     jogo->tela = TELA_JOGO;
 
-    jogoAvisar("Use WASD ou Setas para explorar. Reuna 7 estrelas e ache a saida (S)!", 4.5f);
+    jogoAvisar("Use WASD/Setas. Reuna 7 estrelas e avance pelas saidas (>)!", 4.5f);
 }
 
-static void jogoTrocarSala(Jogo *jogo, int destinoSala, char porta) {
+static void jogoTrocarSala(Jogo *jogo, int destinoSala) {
     jogo->jogador.salaAtual = destinoSala;
     Sala *s = &jogo->salas[destinoSala];
 
-    Posicao p = jogoAcharPorta(s, porta);
-    if (p.x == -1 || p.y == -1) {
-        p = s->inicio;
-    } else {
-        if (p.x == MAPA_LARG - 1 && !mapaEhParede(s, p.x - 1, p.y)) {
-            p.x -= 1;
-        } else if (p.x == 0 && !mapaEhParede(s, p.x + 1, p.y)) {
-            p.x += 1;
-        }
+    Posicao p = s->inicio;
+    if (p.x == 0 && !mapaEhParede(s, p.x + 1, p.y)) {
+        p.x += 1;
     }
 
     jogo->jogador.pos = p;
@@ -177,6 +116,116 @@ static void jogoEncerrarPartida(Jogo *jogo, int venceu) {
     } else {
         jogo->pontos = 0;
         jogo->tela = TELA_GAMEOVER;
+    }
+}
+
+static void jogoAplicarDistracao(Jogo *jogo, const Distracao *d) {
+    jogo->jogador.invencivel = TEMPO_INVENCIVEL;
+
+    switch (d->tipo) {
+        case DIST_CELULAR:
+            jogo->jogador.vidas--;
+            jogoAvisar("Distracao (Celular): perdeu 1 vida!", 3.0f);
+            break;
+
+        case DIST_REDES_SOCIAIS:
+            jogo->descontoTempo -= DESCONTO_TEMPO;
+            jogoAvisar("Distracao (Redes Sociais): perdeu 20s!", 3.0f);
+            break;
+
+        case DIST_SONO:
+            jogo->jogador.pos = jogo->jogador.entrada;
+            jogoAvisar("Distracao (Sono): voltou para a entrada da sala!", 3.0f);
+            break;
+
+        case DIST_CONVERSA:
+            jogo->jogador.vidas--;
+            jogo->descontoTempo -= (DESCONTO_TEMPO / 2);
+            jogoAvisar("Distracao (Conversa): -1 vida e -10s!", 3.0f);
+            break;
+
+        case DIST_VIRUS:
+            if (jogo->jogador.coletadas != NULL) {
+                Estrela *perdida = jogo->jogador.coletadas;
+                jogo->jogador.coletadas = perdida->prox;
+                free(perdida);
+                jogoAvisar("Distracao (Virus): perdeu 1 estrela coletada!", 3.0f);
+            } else if (jogo->jogador.estrelasExtras > 0) {
+                jogo->jogador.estrelasExtras--;
+                jogoAvisar("Distracao (Virus): perdeu 1 estrela bonus!", 3.0f);
+            } else {
+                jogo->jogador.vidas--;
+                jogoAvisar("Distracao (Virus): sem estrelas, perdeu 1 vida!", 3.0f);
+            }
+            break;
+    }
+
+    if (jogo->jogador.vidas <= 0) {
+        jogo->jogador.vidas = 0;
+        jogoEncerrarPartida(jogo, 0);
+    }
+}
+
+static void jogoAplicarAliado(Jogo *jogo, const Aliado *a) {
+    switch (a->tipo) {
+        case ALIADO_DA_ESTRELA:
+            jogo->jogador.estrelasExtras++;
+            jogoAvisar("Professor ajudou: +1 Estrela bonus!", 3.5f);
+            break;
+
+        case ALIADO_DA_VIDA:
+            jogo->jogador.vidas++;
+            jogoAvisar("Professor ajudou: +1 Vida!", 3.5f);
+            break;
+
+        case ALIADO_DA_TEMPO:
+            jogo->descontoTempo += DESCONTO_TEMPO;
+            jogoAvisar("Professor ajudou: +20s no relogio!", 3.5f);
+            break;
+
+        case ALIADO_DA_QUEBRA:
+            jogo->jogador.quebrasRestantes += QUEBRAS_PODER;
+            jogoAvisar("Professor ajudou: +3 quebras de parede!", 3.5f);
+            break;
+    }
+}
+
+static void jogoVerificarEntidades(Jogo *jogo, Sala *sala) {
+    int x = jogo->jogador.pos.x;
+    int y = jogo->jogador.pos.y;
+
+    Estrela *e = estrelaRemoverEm(&sala->estrelas, x, y);
+    if (e != NULL) {
+        if (e->fake) {
+            free(e);
+            jogoAvisar("Era uma estrela FAKE! Nao contou.", 3.0f);
+        } else {
+            estrelaInserir(&jogo->jogador.coletadas, e);
+            int total = jogoContarEstrelas(&jogo->jogador);
+            char msg[96];
+            snprintf(msg, sizeof(msg), "Estrela coletada! Total: %d/%d", total, META_ESTRELAS);
+            jogoAvisar(msg, 2.5f);
+        }
+    }
+
+    Aliado *a = aliadoRemoverEm(&sala->aliados, x, y);
+    if (a != NULL) {
+        jogoAplicarAliado(jogo, a);
+        free(a);
+    }
+
+    ItemVida *v = itemVidaRemoverEm(&sala->itensVida, x, y);
+    if (v != NULL) {
+        jogo->jogador.vidas++;
+        free(v);
+        jogoAvisar("Item de foco coletado: +1 Vida!", 2.5f);
+    }
+
+    if (jogo->jogador.invencivel <= 0.0f) {
+        Distracao *d = distracaoEm(sala->distracoes, x, y);
+        if (d != NULL) {
+            jogoAplicarDistracao(jogo, d);
+        }
     }
 }
 
@@ -256,6 +305,7 @@ void jogoAtualizar(Jogo *jogo) {
                 char msg[96];
                 snprintf(msg, sizeof(msg), "Parede quebrada! Restam %d quebras.", jogo->jogador.quebrasRestantes);
                 jogoAvisar(msg, 3.0f);
+                jogoVerificarEntidades(jogo, sala);
             }
         } else {
             jogo->jogador.pos.x = nx;
@@ -263,36 +313,28 @@ void jogoAtualizar(Jogo *jogo) {
 
             char celula = mapaCelula(sala, nx, ny);
 
-            if (celula == '2') {
-                if (jogo->jogador.salaAtual == 0) {
-                    jogoTrocarSala(jogo, 1, '2');
-                    jogoAvisar("Voce entrou na Sala 2!", 2.5f);
-                } else if (jogo->jogador.salaAtual == 1) {
-                    jogoTrocarSala(jogo, 0, '2');
-                    jogoAvisar("Voce voltou para a Sala 1!", 2.5f);
-                }
-            } else if (celula == '3') {
-                if (jogo->jogador.salaAtual == 0) {
-                    jogoTrocarSala(jogo, 2, '3');
-                    jogoAvisar("Voce entrou na Sala 3!", 2.5f);
-                } else if (jogo->jogador.salaAtual == 2) {
-                    jogoTrocarSala(jogo, 0, '3');
-                    jogoAvisar("Voce voltou para a Sala 1!", 2.5f);
-                }
-            } else if (celula == '1') {
-                jogoTrocarSala(jogo, 0, '1');
-                jogoAvisar("Voce voltou para a Sala 1!", 2.5f);
-            } else if (celula == CH_SAIDA) {
-                int estrelas = jogoContarEstrelas(&jogo->jogador);
-                if (estrelas >= META_ESTRELAS) {
-                    jogoEncerrarPartida(jogo, 1);
-                    return;
+            if (celula == '>' || celula == CH_SAIDA) {
+                if (jogo->jogador.salaAtual < NUM_SALAS - 1) {
+                    int proxima = jogo->jogador.salaAtual + 1;
+                    jogoTrocarSala(jogo, proxima);
+
+                    char msg[64];
+                    snprintf(msg, sizeof(msg), "Voce entrou na Sala %d!", proxima + 1);
+                    jogoAvisar(msg, 2.5f);
                 } else {
-                    char msg[96];
-                    snprintf(msg, sizeof(msg), "Saida trancada! Precisa de %d estrelas (atual: %d).",
-                             META_ESTRELAS, estrelas);
-                    jogoAvisar(msg, 3.5f);
+                    int estrelas = jogoContarEstrelas(&jogo->jogador);
+                    if (estrelas >= META_ESTRELAS) {
+                        jogoEncerrarPartida(jogo, 1);
+                        return;
+                    } else {
+                        char msg[96];
+                        snprintf(msg, sizeof(msg), "Saida trancada! Precisa de %d estrelas (atual: %d).",
+                                 META_ESTRELAS, estrelas);
+                        jogoAvisar(msg, 3.5f);
+                    }
                 }
+            } else {
+                jogoVerificarEntidades(jogo, sala);
             }
         }
     }
@@ -304,7 +346,7 @@ void jogoDesenhar(const Jogo *jogo) {
 
     if (jogo->tela == TELA_NOME) {
         DrawText("escaPIF - Fuga do Brum", LARGURA_JANELA / 2 - 210, 50, 36, COR_ESTRELA);
-        DrawText("Reuna pelo menos 7 estrelas do conhecimento e escape pela saida (S)!",
+        DrawText("Reuna pelo menos 7 estrelas do conhecimento e escape pela saida (>)!",
                  LARGURA_JANELA / 2 - 330, 100, 19, COR_SUAVE);
 
         DrawText("Digite seu nome (sem espacos) e pressione ENTER:",
@@ -337,11 +379,12 @@ void jogoDesenhar(const Jogo *jogo) {
     DrawText(TextFormat("QUEBRAS: %d", jogo->jogador.quebrasRestantes), 590, 10, 19, COR_SUAVE);
 
     if (tempoMensagemHud > 0.0f && mensagemHud[0] != '\0') {
-        DrawText(mensagemHud, 740, 11, 16, COR_VITORIA);
+        DrawText(mensagemHud, 730, 11, 15, COR_VITORIA);
     }
 
     const Sala *sala = &jogo->salas[jogo->jogador.salaAtual];
     mapaDesenhar(sala);
+    entidadesDesenhar(sala);
 
     int desenharJogador = 1;
     if (jogo->jogador.invencivel > 0.0f && ((int)(jogo->jogador.invencivel * 10) % 2 == 0)) {
@@ -386,9 +429,9 @@ void jogoDesenhar(const Jogo *jogo) {
 }
 
 void jogoFinalizar(Jogo *jogo) {
-    jogoLimparColetadas(&jogo->jogador);
+    estrelasLiberar(&jogo->jogador.coletadas);
     for (int i = 0; i < NUM_SALAS; i++) {
-        jogoLimparListasSala(&jogo->salas[i]);
+        salaLiberar(&jogo->salas[i]);
     }
     rankingLiberar(&jogo->ranking);
 }
