@@ -8,6 +8,7 @@
 
 static char mensagemHud[128] = "";
 static float tempoMensagemHud = 0.0f;
+static float tempoProximaMovimentacao = 0.0f;
 
 static void jogoAvisar(const char *texto, float duracao) {
     strncpy(mensagemHud, texto, sizeof(mensagemHud) - 1);
@@ -47,7 +48,7 @@ static void jogoPrepararSala(Sala *s) {
 
 void jogoInicializar(Jogo *jogo) {
     memset(jogo, 0, sizeof(Jogo));
-    strcpy(jogo->nome, "Aluno");
+    jogo->nome[0] = '\0';
     jogo->tela = TELA_NOME;
     jogo->ranking = rankingCarregar(ARQ_RANKING);
 }
@@ -76,6 +77,7 @@ void jogoNovaPartida(Jogo *jogo) {
     jogo->jogador.estrelasExtras = 0;
     jogo->jogador.quebrasRestantes = 0;
     jogo->jogador.invencivel = 0.0f;
+    tempoProximaMovimentacao = 0.0f;
 
     jogo->inicio = GetTime();
     jogo->descontoTempo = 0;
@@ -198,7 +200,8 @@ static void jogoVerificarEntidades(Jogo *jogo, Sala *sala) {
     if (e != NULL) {
         if (e->fake) {
             free(e);
-            jogoAvisar("Era uma estrela FAKE! Nao contou.", 3.0f);
+            jogo->jogador.pos = jogo->jogador.entrada;
+            jogoAvisar("Estrela FAKE! Voce voltou para a entrada da sala.", 3.0f);
         } else {
             estrelaInserir(&jogo->jogador.coletadas, e);
             int total = jogoContarEstrelas(&jogo->jogador);
@@ -257,7 +260,8 @@ void jogoAtualizar(Jogo *jogo) {
 
         if (IsKeyPressed(KEY_ENTER)) {
             if (strlen(jogo->nome) == 0) {
-                strcpy(jogo->nome, "Aluno");
+                jogoAvisar("Digite seu nome antes de iniciar.", 3.0f);
+                return;
             }
             jogoNovaPartida(jogo);
         }
@@ -286,17 +290,40 @@ void jogoAtualizar(Jogo *jogo) {
 
     Sala *sala = &jogo->salas[jogo->jogador.salaAtual];
 
+    if (tempoProximaMovimentacao > 0.0f) {
+        tempoProximaMovimentacao -= dt;
+        if (tempoProximaMovimentacao < 0.0f) tempoProximaMovimentacao = 0.0f;
+    }
+
     int dx = 0, dy = 0;
-    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) dy = -1;
-    else if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) dy = 1;
-    else if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) dx = -1;
-    else if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) dx = 1;
+    int teclaMovimento = IsKeyDown(KEY_UP) || IsKeyDown(KEY_W) ||
+                         IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S) ||
+                         IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A) ||
+                         IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D);
+    int novaTeclaMovimento = IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W) ||
+                             IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S) ||
+                             IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A) ||
+                             IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D);
+
+    if (!teclaMovimento) tempoProximaMovimentacao = 0.0f;
+    if (novaTeclaMovimento || (teclaMovimento && tempoProximaMovimentacao <= 0.0f)) {
+        if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W)) dy = -1;
+        else if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S)) dy = 1;
+        else if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) dx = -1;
+        else if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) dx = 1;
+        tempoProximaMovimentacao = 0.14f;
+    }
 
     if (dx != 0 || dy != 0) {
         int nx = jogo->jogador.pos.x + dx;
         int ny = jogo->jogador.pos.y + dy;
 
-        if (mapaEhParede(sala, nx, ny)) {
+        Distracao *d = distracaoEm(sala->distracoes, nx, ny);
+        if (d != NULL) {
+            if (jogo->jogador.invencivel <= 0.0f) {
+                jogoAplicarDistracao(jogo, d);
+            }
+        } else if (mapaEhParede(sala, nx, ny)) {
             if (jogo->jogador.quebrasRestantes > 0 && mapaQuebrarParede(sala, nx, ny)) {
                 jogo->jogador.quebrasRestantes--;
                 jogo->jogador.pos.x = nx;
