@@ -9,6 +9,7 @@
 static char mensagemHud[128] = "";
 static float tempoMensagemHud = 0.0f;
 static float tempoProximaMovimentacao = 0.0f;
+static float tempoMovimentoDistracoes = 0.0f;
 
 static void jogoAvisar(const char *texto, float duracao) {
     strncpy(mensagemHud, texto, sizeof(mensagemHud) - 1);
@@ -31,6 +32,29 @@ static int jogoCalcularPontos(const Jogo *jogo, int segundosGastos) {
            bonusTempo;
 }
 
+static void jogoConfigurarPatrulhas(int indiceSala, Sala *s) {
+    for (Distracao *d = s->distracoes; d != NULL; d = d->prox) {
+        d->dx = 0;
+        d->dy = 0;
+
+        if (indiceSala == 0) {
+            if (d->pos.x >= 24 && d->pos.x <= 30 && d->pos.y <= 8) {
+                d->dy = 1;
+            } else if (d->pos.x >= 46 && d->pos.y >= 11) {
+                d->dy = -1;
+            } else if (d->pos.x >= 31 && d->pos.x <= 45 && d->pos.y <= 8) {
+                d->dx = 1;
+            }
+        } else if (indiceSala == 1) {
+            if (d->pos.y == 4 && (d->pos.x == 47 || d->pos.x == 50)) {
+                d->dy = 1;
+            } else if (d->pos.y == 15 && d->pos.x == 54) {
+                d->dx = -1;
+            }
+        }
+    }
+}
+
 static void jogoPrepararSala(Sala *s) {
     s->inicio.x = 1;
     s->inicio.y = 2;
@@ -44,6 +68,7 @@ static void jogoPrepararSala(Sala *s) {
     }
 
     entidadesExtrairDoMapa(s);
+    jogoConfigurarPatrulhas(indiceSala, s);
 }
 
 void jogoInicializar(Jogo *jogo) {
@@ -78,6 +103,7 @@ void jogoNovaPartida(Jogo *jogo) {
     jogo->jogador.quebrasRestantes = 0;
     jogo->jogador.invencivel = 0.0f;
     tempoProximaMovimentacao = 0.0f;
+    tempoMovimentoDistracoes = 0.0f;
 
     jogo->inicio = GetTime();
     jogo->descontoTempo = 0;
@@ -192,6 +218,62 @@ static void jogoAplicarAliado(Jogo *jogo, const Aliado *a) {
     }
 }
 
+static int jogoPodeMoverDistracao(const Sala *sala, const Distracao *atual, int x, int y) {
+    if (x <= 0 || x >= MAPA_LARG - 1 || y <= 0 || y >= MAPA_ALT - 1) {
+        return 0;
+    }
+    if (mapaEhParede(sala, x, y)) {
+        return 0;
+    }
+    char celula = mapaCelula(sala, x, y);
+    if (celula == '>' || celula == CH_SAIDA) {
+        return 0;
+    }
+    Distracao *outra = distracaoEm(sala->distracoes, x, y);
+    if (outra != NULL && outra != atual) {
+        return 0;
+    }
+    return 1;
+}
+
+static void jogoAtualizarDistracoes(Jogo *jogo, Sala *sala, float dt) {
+    tempoMovimentoDistracoes += dt;
+    if (tempoMovimentoDistracoes < 0.25f) {
+        return;
+    }
+    tempoMovimentoDistracoes = 0.0f;
+
+    for (Distracao *d = sala->distracoes; d != NULL; d = d->prox) {
+        if (d->dx == 0 && d->dy == 0) {
+            continue;
+        }
+
+        int nx = d->pos.x + d->dx;
+        int ny = d->pos.y + d->dy;
+
+        if (!jogoPodeMoverDistracao(sala, d, nx, ny)) {
+            d->dx = -d->dx;
+            d->dy = -d->dy;
+            nx = d->pos.x + d->dx;
+            ny = d->pos.y + d->dy;
+        }
+
+        if (jogoPodeMoverDistracao(sala, d, nx, ny)) {
+            d->pos.x = nx;
+            d->pos.y = ny;
+        }
+
+        if (d->pos.x == jogo->jogador.pos.x &&
+            d->pos.y == jogo->jogador.pos.y &&
+            jogo->jogador.invencivel <= 0.0f) {
+            jogoAplicarDistracao(jogo, d);
+            if (jogo->tela == TELA_GAMEOVER) {
+                return;
+            }
+        }
+    }
+}
+
 static void jogoVerificarEntidades(Jogo *jogo, Sala *sala) {
     int x = jogo->jogador.pos.x;
     int y = jogo->jogador.pos.y;
@@ -290,6 +372,11 @@ void jogoAtualizar(Jogo *jogo) {
 
     Sala *sala = &jogo->salas[jogo->jogador.salaAtual];
 
+    jogoAtualizarDistracoes(jogo, sala, dt);
+    if (jogo->tela == TELA_GAMEOVER) {
+        return;
+    }
+    
     if (tempoProximaMovimentacao > 0.0f) {
         tempoProximaMovimentacao -= dt;
         if (tempoProximaMovimentacao < 0.0f) tempoProximaMovimentacao = 0.0f;
