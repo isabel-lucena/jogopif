@@ -8,6 +8,8 @@ escaPIF é um jogo de fuga em 2D desenvolvido em C com a biblioteca raylib. O jo
 
 https://youtu.be/wn9y0k5BS7I
 
+---
+
 <details>
   <summary><b>**Compilação do projeto**</b></summary>
   <br>
