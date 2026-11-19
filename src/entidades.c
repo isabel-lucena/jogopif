@@ -2,7 +2,6 @@
 
 #include "entidades.h"
 
-/* Auxiliares privadas: alocam e inicializam um no de cada entidade. */
 static Estrela *novaEstrela(int x, int y, int fake) {
     Estrela *e = malloc(sizeof(*e));
     if (e == NULL) return NULL;
@@ -82,7 +81,6 @@ void entidadesExtrairDoMapa(Sala *sala) {
                 continue;
             }
 
-            /* Entidade extraida (ou falha de malloc): a celula vira chao. */
             sala->mapa[y][x] = CH_CHAO;
         }
     }
