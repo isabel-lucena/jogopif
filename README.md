@@ -4,6 +4,9 @@
 
 escaPIF é um jogo de fuga em 2D desenvolvido em C com a biblioteca raylib. O jogador controla um aluno preso no Brum e, para conseguir escapar, precisa reunir pelo menos 7 das 10 estrelas do conhecimento espalhadas pelas 3 salas do prédio, antes que o tempo acabe, enquanto desvia das distrações que tentam tirar seu foco: o celular, as redes sociais, a conversa, o sono e os vírus no código.
 
+## Demonstração em vídeo
+
+https://youtu.be/wn9y0k5BS7I
 
 <details>
   <summary><b>**Compilação do projeto**</b></summary>
