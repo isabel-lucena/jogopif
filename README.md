@@ -35,7 +35,7 @@ O Makefile guarda a "receita" de compilação. Assim, você só precisa digitar 
 
 | Comando      | O que faz                                      |
 |--------------|------------------------------------------------|
-| `make`       | Compila tudo e cria o jogo em `build/escapif`  |
+| `make`       | Compila tudo e cria o jogo em `./escapif`  |
 | `make run`   | Compila e já abre o jogo                       |
 | `make clean` | Apaga a pasta `build/` para compilar do zero   |
 
@@ -56,7 +56,7 @@ Os 3 professores (Péricles, Daniel e Thiaguinho) são aliados, um em cada sala,
 - 20 segundos a mais no relógio.
 - o poder de quebrar 3 paredes: andando contra uma parede, ela é quebrada e vira chão, abrindo atalhos pelo mapa (as paredes da borda da sala não quebram).
 
-As distrações ficam paradas pelo mapa, como quadrados vermelhos com uma letra que mostra o tipo (o tipo de cada uma é sorteado no começo da partida). Elas funcionam como obstáculos: o jogador não consegue passar por cima, e quando encosta em uma, sofre o efeito dela:
+CUIDADO! Existem distrações nas salas, algumas ficam paradas e algumas se movimentam, são quadrados vermelhos com uma letra que mostra o tipo (o tipo de cada uma é sorteado no começo da partida). Elas funcionam como obstáculos: o jogador não consegue passar por cima, e quando encosta em uma, sofre o efeito dela:
 
 | Letra | Distração | Efeito |
 | --- | --- | --- |
