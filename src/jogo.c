@@ -55,7 +55,7 @@ static void jogoConfigurarPatrulhas(int indiceSala, Sala *s) {
     }
 }
 
-static void jogoPrepararSala(Sala *s) {
+static void jogoPrepararSala(int indiceSala, Sala *s) {
     s->inicio.x = 1;
     s->inicio.y = 2;
 
@@ -92,7 +92,7 @@ void jogoNovaPartida(Jogo *jogo) {
         if (!mapaCarregar(&jogo->salas[i], arquivos[i])) {
             TraceLog(LOG_ERROR, "Nao foi possivel carregar %s", arquivos[i]);
         }
-        jogoPrepararSala(&jogo->salas[i]);
+        jogoPrepararSala(i, &jogo->salas[i]);
     }
 
     jogo->jogador.salaAtual = 0;
