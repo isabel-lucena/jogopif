@@ -36,7 +36,7 @@
 #define CH_DISTRACAO  'D'
 #define CH_PROFESSOR  'P'
 #define CH_VIDA       '+'
-#define CH_SAIDA      'S'       
+#define CH_SAIDA      '>'       
 
 #define COR_FUNDO      BLACK
 #define COR_PAREDE     DARKBLUE                        
@@ -83,7 +83,7 @@ typedef struct Estrela {
 
 typedef struct Distracao {     
     Posicao pos;
-    int tipo;
+    int dx, dy, tipo;
     struct Distracao *prox;
 } Distracao;
 
