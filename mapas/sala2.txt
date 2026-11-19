@@ -12,7 +12,7 @@ xx         xxxxx         xxxxx         x   x  x  x  x  x   x
 xxxxx  xxxxxxxxxxxxx  xxxxxxxxxxxxxxxxxx   x  x  x  x  x   x
 xxxxx  xxxxxxxxxxxxx  xxxxxxxxxxxxxxxxxx   x  x  x  x  x   x
 xx         xxxxx         xxxxx         x   x  x  x  x  x   x
-xx    D                  xxxxx    *    x               D   x
+xx    D                  xxxxx    *    x                   x
 xx         xxxxx   D                   x              D    >
-xx         xxxxx         xxxxx         x    D              x
+xx         xxxxx         xxxxx         x                   x
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
